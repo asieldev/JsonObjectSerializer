@@ -1,0 +1,5 @@
+# Archivos de configuración de entorno
+*.identcache
+__history/
+__recovery/
+*.tvsconfig
