@@ -1,0 +1,429 @@
+﻿{
+********************************************************************************
+	Copyright (c) 2023-2024 Asiel Aldana Ortiz
+
+	A classe TJsonSerializer<T> na unidade uJsonGeneric permite serializar e
+  desserializar objetos e arrays genéricos em Delphi usando JSON.
+	Utiliza RTTI para mapear as propriedades dos objetos para JSON e vice-versa,
+  tornando-a flexível para qualquer classe. É útil para persistir e transferir
+  dados em formato JSON em APIs e bancos de dados, facilitando a manipulação
+  em diferentes camadas da aplicação.
+
+********************************************************************************
+}
+unit uJsonObjectSerializer;
+
+interface
+
+uses
+  System.SysUtils,
+  System.Rtti,
+  System.JSON,
+  System.Classes,
+  Winapi.Windows;
+type
+
+  TJsonObjectSerializer<T: class, constructor> = class
+  private
+    class function DeserializeValue(const Ctx: TRttiContext;
+      RttiProp: TRttiProperty; JsonValue: TJSONValue): TValue;
+    function GetArrayLength(const AValue: TValue): Integer;
+    function GetDynArrayValue(const AValue: TValue; Index: Integer): TValue;
+  public
+    class function JsonToObject(const Json: string): T;overload;
+    class function JsonObjectToObject(JsonObj: TJSONObject): T;overload;
+    class function JsonArrayToObjectArray(JsonArray: TJSONArray): TArray<T>;overload;
+    class function JsonStringToObjectArray(const JsonArrayString: string): TArray<T>;overload;
+
+    class function ObjectToJsonString(Obj: T): string;
+
+//    class function ObjectToJson(Obj: T): string;
+//    class function ArrayToJson(const ObjArray: TArray<T>): string;
+//    class function JsonToArray(const Json: string): TArray<T>;
+  end;
+
+implementation
+
+class function TJsonObjectSerializer<T>.DeserializeValue(const Ctx: TRttiContext;
+  RttiProp: TRttiProperty; JsonValue: TJSONValue): TValue;
+var
+  ChildObj: TObject;
+  ElementType: TRttiType;
+  ChildJsonObj: TJSONObject;
+  ChildProp: TRttiProperty;
+  ChildJsonValue: TJSONValue;
+  ChildValue: TValue;
+  JsonArray: TJSONArray;
+  ArrayValues: TArray<TValue>;
+  i: Integer;
+begin
+  if JsonValue = nil then
+    Exit(TValue.Empty);
+
+  case RttiProp.PropertyType.TypeKind of
+    tkInteger:
+      Result := (JsonValue as TJSONNumber).AsInt;
+
+    tkFloat:
+      if RttiProp.PropertyType.Handle = TypeInfo(TDateTime) then
+        Result := StrToDateTime((JsonValue as TJSONString).Value)
+      else
+        Result := (JsonValue as TJSONNumber).AsDouble;
+
+    tkString, tkUString, tkWString:
+      Result := (JsonValue as TJSONString).Value;
+
+    tkEnumeration:
+      if RttiProp.PropertyType.Handle = TypeInfo(Boolean) then
+      begin
+        if JsonValue is TJSONTrue then
+          Result := True
+        else if JsonValue is TJSONFalse then
+          Result := False
+        else
+          Result := False;
+      end;
+
+    tkClass:
+    begin
+      if JsonValue is TJSONObject then
+      begin
+        ChildJsonObj := JsonValue as TJSONObject;
+        ElementType := Ctx.GetType(RttiProp.PropertyType.Handle);
+        ChildObj := RttiProp.PropertyType.AsInstance.MetaclassType.Create;
+
+        for ChildProp in ElementType.GetProperties do
+        begin
+          if ChildProp.IsWritable then
+          begin
+            ChildJsonValue := ChildJsonObj.GetValue(ChildProp.Name);
+            if Assigned(ChildJsonValue) then
+            begin
+              ChildValue := DeserializeValue(Ctx, ChildProp, ChildJsonValue);
+              ChildProp.SetValue(ChildObj, ChildValue);
+            end;
+          end;
+        end;
+
+        Result := TValue.From<TObject>(ChildObj);
+      end
+      else
+        Result := TValue.Empty;
+    end;
+
+    tkDynArray:
+    begin
+      if JsonValue is TJSONArray then
+      begin
+        JsonArray := TJSONArray(JsonValue);
+        ElementType := (RttiProp.PropertyType as TRttiDynamicArrayType).ElementType;  // Corrección en la obtención del tipo de elemento en el array
+        SetLength(ArrayValues, JsonArray.Count);
+
+        for i := 0 to JsonArray.Count - 1 do
+        begin
+          ChildJsonObj := JsonArray.Items[i] as TJSONObject;
+          ChildObj := ElementType.AsInstance.MetaclassType.Create;
+
+          for ChildProp in ElementType.GetProperties do
+          begin
+            if ChildProp.IsWritable then
+            begin
+              ChildJsonValue := ChildJsonObj.GetValue(ChildProp.Name);
+              if Assigned(ChildJsonValue) then
+              begin
+                ChildValue := DeserializeValue(Ctx, ChildProp, ChildJsonValue);
+                ChildProp.SetValue(ChildObj, ChildValue);
+              end;
+            end;
+          end;
+
+          ArrayValues[i] := TValue.From<TObject>(ChildObj);
+        end;
+
+        Result := TValue.FromArray(RttiProp.PropertyType.Handle, ArrayValues);
+      end
+      else
+        Result := TValue.Empty;
+    end;
+
+    else
+      Result := TValue.Empty;
+  end;
+end;
+
+class function TJsonObjectSerializer<T>.JsonArrayToObjectArray(
+  JsonArray: TJSONArray): TArray<T>;
+var
+  Ctx: TRttiContext;
+  ElementType: TRttiType;
+  JsonObj: TJSONObject;
+  ObjValue: T;
+  i: Integer;
+begin
+  SetLength(Result, JsonArray.Count);
+  Ctx := TRttiContext.Create;
+
+  try
+    ElementType := Ctx.GetType(TypeInfo(T));
+
+    for i := 0 to JsonArray.Count - 1 do
+    begin
+      JsonObj := JsonArray.Items[i] as TJSONObject;
+      ObjValue := JsonToObject(JsonObj.ToString);  // Convierte cada elemento JSON en un objeto T
+      Result[i] := ObjValue;
+    end;
+
+  finally
+    Ctx.Free;
+  end;
+end;
+
+class function TJsonObjectSerializer<T>.JsonObjectToObject(
+  JsonObj: TJSONObject): T;
+var
+  Ctx: TRttiContext;
+  RttiType: TRttiType;
+  RttiProp: TRttiProperty;
+  JsonValue: TJSONValue;
+  Value: TValue;
+begin
+  if not Assigned(JsonObj) then
+    raise Exception.Create('Objeto JSON inválido');
+
+  Result := T.Create;
+  Ctx := TRttiContext.Create;
+
+  try
+    RttiType := Ctx.GetType(T);
+
+    for RttiProp in RttiType.GetProperties do
+    begin
+      if RttiProp.IsWritable then
+      begin
+        JsonValue := JsonObj.GetValue(RttiProp.Name);
+        if Assigned(JsonValue) then
+        begin
+          Value := DeserializeValue(Ctx, RttiProp, JsonValue);
+          RttiProp.SetValue(TObject(Result), Value);
+        end;
+      end;
+    end;
+  finally
+    Ctx.Free;
+  end;
+end;
+
+class function TJsonObjectSerializer<T>.JsonStringToObjectArray(
+  const JsonArrayString: string): TArray<T>;
+var
+  JsonArray: TJSONArray;
+begin
+  // Parsear el string JSON a un TJSONArray
+  JsonArray := TJSONObject.ParseJSONValue(JsonArrayString) as TJSONArray;
+
+  if not Assigned(JsonArray) then
+    raise Exception.Create('JSON inválido: se esperaba un array JSON');
+
+  try
+    // Llama a la función JsonArrayToObjectArray con el TJSONArray
+    Result := JsonArrayToObjectArray(JsonArray);
+  finally
+    JsonArray.Free;
+  end;
+end;
+
+class function TJsonObjectSerializer<T>.JsonToObject(const Json: string): T;
+var
+  Ctx: TRttiContext;
+  RttiType: TRttiType;
+  RttiProp: TRttiProperty;
+  JsonObj: TJSONObject;
+  JsonValue: TJSONValue;
+  Value: TValue;
+begin
+  Result := T.Create;
+  JsonObj := TJSONObject.ParseJSONValue(Json) as TJSONObject;
+
+  if not Assigned(JsonObj) then
+    raise Exception.Create('JSON inválido');
+
+  Ctx := TRttiContext.Create;
+
+  try
+    RttiType := Ctx.GetType(T);
+    for RttiProp in RttiType.GetProperties do
+    begin
+      if RttiProp.IsWritable then
+      begin
+        JsonValue := JsonObj.GetValue(RttiProp.Name);
+        if Assigned(JsonValue) then
+        begin
+          Value := DeserializeValue(Ctx, RttiProp, JsonValue);
+          RttiProp.SetValue(TObject(Result), Value);
+        end;
+      end;
+    end;
+  finally
+    JsonObj.Free;
+    Ctx.Free;
+  end;
+end;
+
+class function TJsonObjectSerializer<T>.ObjectToJsonString(Obj: T): string;
+var
+  Ctx: TRttiContext;
+  RttiType: TRttiType;
+  RttiProp: TRttiProperty;
+  JsonObj: TJSONObject;
+  PropValue: TValue;
+  i: Integer;
+  ChildObj: TObject;
+  JsonArray: TJSONArray;
+  StrList: TStrings;
+  ChildJsonStr: string;
+  ChildJsonObj: TJSONObject;
+  ArrayLength: Integer;
+begin
+  // Depuración inicial
+  if Obj = nil then
+  begin
+    Result := '{}';
+    Exit;
+  end;
+
+  Ctx := TRttiContext.Create;
+  JsonObj := TJSONObject.Create;
+  try
+    RttiType := Ctx.GetType(T);
+
+    for RttiProp in RttiType.GetProperties do
+    begin
+      try
+        // Asegúrate de que la propiedad sea legible
+        if not RttiProp.IsReadable then Continue;
+
+        // Obtener el valor de la propiedad
+        PropValue := RttiProp.GetValue(TObject(Obj));
+
+        case RttiProp.PropertyType.TypeKind of
+          tkInteger:
+            JsonObj.AddPair(RttiProp.Name, TJSONNumber.Create(PropValue.AsInteger));
+
+          tkFloat:
+            if RttiProp.PropertyType.Handle = TypeInfo(TDateTime) then
+              JsonObj.AddPair(RttiProp.Name, TJSONString.Create(FormatDateTime('yyyy-mm-dd"T"hh:nn:ss.zzz"Z"', PropValue.AsExtended)))
+            else
+              JsonObj.AddPair(RttiProp.Name, TJSONNumber.Create(PropValue.AsExtended));
+
+          tkString, tkUString, tkWString:
+            begin
+              if Trim(PropValue.AsString) <> '' then
+                JsonObj.AddPair(RttiProp.Name, TJSONString.Create(PropValue.AsString));
+            end;
+
+          tkClass:
+            begin
+              ChildObj := PropValue.AsObject;
+              if Assigned(ChildObj) then
+              begin
+                if ChildObj is TStrings then
+                begin
+                  StrList := ChildObj as TStrings;
+                  if StrList.Count > 0 then
+                  begin
+                    JsonArray := TJSONArray.Create;
+                    for i := 0 to StrList.Count - 1 do
+                      JsonArray.Add(StrList[i]);
+                    JsonObj.AddPair(RttiProp.Name, JsonArray);
+                  end;
+                end
+                else
+                begin
+                  try
+                    ChildJsonStr := TJsonObjectSerializer<TObject>.ObjectToJsonString(ChildObj);
+                    ChildJsonObj := TJSONObject.ParseJSONValue(ChildJsonStr) as TJSONObject;
+
+                    if Assigned(ChildJsonObj) and (ChildJsonObj.Count > 0) then
+                      JsonObj.AddPair(RttiProp.Name, ChildJsonObj);
+                  except
+                    // Manejar cualquier error de serialización
+                  end;
+                end;
+              end;
+            end;
+
+          tkDynArray:
+            begin
+              JsonArray := TJSONArray.Create;
+
+              // Usar RTTI para obtener la longitud del arreglo
+              if PropValue.IsArray then
+              begin
+                // Aquí asumimos que el tipo de elemento es conocido y se maneja como un tipo genérico
+                ArrayLength := Length(PropValue.GetArrayElement(0)); // Esto puede causar problemas si no es un arreglo de tipo genérico
+
+                for i := 0 to ArrayLength - 1 do
+                begin
+                  // Aquí debemos realizar un casteo adecuado dependiendo del tipo
+                  // Esto puede ser complicado, y necesitarías una lógica específica dependiendo del tipo de elementos
+                  // Supongamos que los elementos son de tipo TObject
+                  ChildObj := PropValue.GetArrayElement(i).AsObject; // Esto puede fallar si no es un objeto
+
+                  if Assigned(ChildObj) then
+                  begin
+                    try
+                      ChildJsonStr := TJsonObjectSerializer<TObject>.ObjectToJsonString(ChildObj);
+                      ChildJsonObj := TJSONObject.ParseJSONValue(ChildJsonStr) as TJSONObject;
+
+                      if Assigned(ChildJsonObj) and (ChildJsonObj.Count > 0) then
+                        JsonArray.AddElement(ChildJsonObj);
+                    except
+                      // Manejar errores de serialización de elementos del array
+                    end;
+                  end;
+                end;
+
+                if JsonArray.Count > 0 then
+                  JsonObj.AddPair(RttiProp.Name, JsonArray);
+              end;
+            end;
+
+          tkEnumeration:
+            begin
+              if RttiProp.PropertyType.Handle = TypeInfo(Boolean) then
+              begin
+                if PropValue.AsBoolean then
+                  JsonObj.AddPair(RttiProp.Name, TJSONTrue.Create)
+                else
+                  JsonObj.AddPair(RttiProp.Name, TJSONFalse.Create);
+              end
+              else
+                JsonObj.AddPair(RttiProp.Name, TJSONString.Create(PropValue.ToString));
+            end;
+        end;
+      except
+        on E: Exception do
+        begin
+          // Manejar errores por propiedad si es necesario
+        end;
+      end;
+    end;
+
+    // Si no se agregó nada, asegurar que sea un objeto vacío con un marcador
+    if JsonObj.Count = 0 then
+      JsonObj.AddPair('__empty', TJSONNull.Create);
+
+    Result := JsonObj.ToString;
+  finally
+    JsonObj.Free;
+    Ctx.Free;
+  end;
+end;
+
+
+
+
+
+
+end.
+

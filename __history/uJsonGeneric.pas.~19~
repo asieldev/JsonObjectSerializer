@@ -1,0 +1,148 @@
+﻿{
+********************************************************************************
+	Copyright (c) 2023-2024 Asiel Aldana Ortiz
+
+	A classe TJsonSerializer<T> na unidade uJsonGeneric permite serializar e
+  desserializar objetos e arrays genéricos em Delphi usando JSON.
+	Utiliza RTTI para mapear as propriedades dos objetos para JSON e vice-versa,
+  tornando-a flexível para qualquer classe. É útil para persistir e transferir
+  dados em formato JSON em APIs e bancos de dados, facilitando a manipulação
+  em diferentes camadas da aplicação.
+
+********************************************************************************
+}
+unit uJsonGeneric;
+
+interface
+
+uses
+  Rtti, TypInfo, SysUtils, uJsonDataObjects;
+
+type
+  ISerializable = interface
+    ['{DA5A8D7B-6498-4D76-A9B4-9812C6FF78F6}']
+    function ObjectToJson: string;
+    procedure ObjectFromJson(const Json: string);
+  end;
+
+  TJsonSerializer<T: class, constructor> = class
+  public
+    class function JsonToObject(const Json: string):T;overload;
+    class function ObjectToJson(Obj: T): string;
+    class function ArrayToJson(const ObjArray: TArray<T>): string;
+    class function JsonToArray(const Json: string): TArray<T>;
+  end;
+
+implementation
+
+class function TJsonSerializer<T>.ObjectToJson(Obj: T): string;
+var
+  Ctx: TRttiContext;
+  RttiType: TRttiType;
+  RttiProp: TRttiProperty;
+  JsonObj: TJsonObject;
+begin
+  JsonObj := TJsonObject.Create;
+  try
+    RttiType := Ctx.GetType(TObject(Obj).ClassType);
+    for RttiProp in RttiType.GetProperties do
+    begin
+      if RttiProp.IsReadable then
+      begin
+        case RttiProp.PropertyType.TypeKind of
+          tkInteger: JsonObj.I[RttiProp.Name] := RttiProp.GetValue(TObject(Obj)).AsInteger;
+          tkFloat: JsonObj.F[RttiProp.Name] := RttiProp.GetValue(TObject(Obj)).AsExtended;
+          tkString, tkUString: JsonObj.S[RttiProp.Name] := RttiProp.GetValue(TObject(Obj)).AsString;
+        end;
+      end;
+    end;
+    Result := JsonObj.ToJSON;
+  finally
+    JsonObj.Free;
+  end;
+end;
+
+class function TJsonSerializer<T>.JsonToObject(const Json: string): T;
+var
+  Ctx: TRttiContext;
+  RttiType: TRttiType;
+  RttiProp: TRttiProperty;
+  JsonObj: TJsonObject;
+begin
+  Result := T.Create;
+
+  JsonObj := TJsonObject.Parse(Json) as TJsonObject;
+  Ctx := TRttiContext.Create;
+  try
+    RttiType := Ctx.GetType(T);
+    for RttiProp in RttiType.GetProperties do
+    begin
+      if RttiProp.IsWritable and JsonObj.Contains(RttiProp.Name) then
+      begin
+        case RttiProp.PropertyType.TypeKind of
+          tkInteger:
+            RttiProp.SetValue(TObject(Result), JsonObj.I[RttiProp.Name]);
+
+          tkFloat:
+            if RttiProp.PropertyType.Handle = TypeInfo(TDateTime) then
+              RttiProp.SetValue(TObject(Result), JsonObj.D[RttiProp.Name])
+            else
+              RttiProp.SetValue(TObject(Result), JsonObj.F[RttiProp.Name]);
+
+          tkString, tkUString:
+            RttiProp.SetValue(TObject(Result), JsonObj.S[RttiProp.Name]);
+
+          tkEnumeration:
+            if RttiProp.PropertyType.Handle = TypeInfo(Boolean) then
+              RttiProp.SetValue(TObject(Result), JsonObj.B[RttiProp.Name]); // Manejo para booleanos
+        end;
+      end;
+    end;
+  finally
+    Ctx.Free;  // Liberar el contexto RTTI
+    JsonObj.Free;
+  end;
+end;
+
+
+class function TJsonSerializer<T>.ArrayToJson(const ObjArray: TArray<T>): string;
+var
+  JsonArray: TJsonArray;
+  JsonObj: TJsonObject;
+  Obj: T;
+begin
+  JsonArray := TJsonArray.Create;
+  try
+    for Obj in ObjArray do
+    begin
+      JsonObj := TJsonObject.Parse(TJsonSerializer<T>.ObjectToJson(Obj)) as TJsonObject;
+      JsonArray.Add(JsonObj);
+    end;
+    Result := JsonArray.ToJSON;
+  finally
+    JsonArray.Free;
+  end;
+end;
+
+class function TJsonSerializer<T>.JsonToArray(const Json: string): TArray<T>;
+var
+  JsonArray: TJsonArray;
+  i: Integer;
+  Obj: T;
+  JsonObj: TJsonObject;
+begin
+  JsonArray := TJsonArray.Parse(Json) as TJsonArray;
+  try
+    SetLength(Result, JsonArray.Count);
+    for i := 0 to JsonArray.Count - 1 do
+    begin
+      Obj := T.Create;
+      JsonObj := JsonArray.O[i];  // Accede al elemento como TJsonObject
+      Result[i]:= TJsonSerializer<T>.JsonToObject(JsonObj.ToJSON);
+    end;
+  finally
+    JsonArray.Free;
+  end;
+end;
+
+end.

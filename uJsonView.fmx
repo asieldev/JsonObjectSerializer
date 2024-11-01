@@ -1,0 +1,311 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Json Serializer'
+  ClientHeight = 700
+  ClientWidth = 601
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object tbControl: TTabControl
+    Align = Client
+    Size.Width = 601.000000000000000000
+    Size.Height = 700.000000000000000000
+    Size.PlatformDefault = False
+    TabIndex = 0
+    TabOrder = 0
+    TabPosition = PlatformDefault
+    object tbtm1: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = True
+      Size.Width = 55.000000000000000000
+      Size.Height = 24.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'JsonTo'
+      object btnJsonToArray: TButton
+        Align = Top
+        Margins.Left = 10.000000000000000000
+        Margins.Right = 10.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 649.000000000000000000
+        Size.Width = 581.000000000000000000
+        Size.Height = 25.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Text = 'JsonToArray'
+        OnClick = btnJsonToArrayClick
+      end
+      object btnJsonToObject: TButton
+        Align = Top
+        Margins.Left = 10.000000000000000000
+        Margins.Right = 10.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 281.000000000000000000
+        Size.Width = 581.000000000000000000
+        Size.Height = 25.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Text = 'JsonToObject'
+        OnClick = btnJsonToObjectClick
+      end
+      object mmoJsonToObject: TMemo
+        Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+        Align = Top
+        Margins.Left = 10.000000000000000000
+        Margins.Top = 10.000000000000000000
+        Margins.Right = 10.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 10.000000000000000000
+        Size.Width = 581.000000000000000000
+        Size.Height = 271.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 2
+        Lines.Strings = (
+          '    {'
+          '        "motorista": {'
+          '            "codigo": 6941,'
+          '            "transportador": 3260134,'
+          '            "sindicato": 649,'
+          '            "grupos": ['
+          '                {'
+          '                    "codigo": 375264,'
+          '                    "pessoa": 3260134,'
+          '                    "nome": "MOTORISTAS LETSARA"'
+          '                },'
+          '                {'
+          '                    "codigo": 34486,'
+          '                    "pessoa": 3260134,'
+          '                    "nome": "GM2"'
+          '                },'
+          '                {'
+          '                    "codigo": 175863,'
+          '                    "pessoa": 3260134,'
+          '                    "nome": "GM4"'
+          '                }'
+          '            ]'
+          '        },'
+          '        "dados": {'
+          '            "nome_mot": "CLEOMAR GODOI VILHALVA",'
+          '            "escala": "Trabalho",'
+          '            "ini_jor": "2024-10-31T08:27:31.000Z",'
+          '            "status": "Parado",'
+          '            "o_status": "Parametriza'#65533#65533'o",'
+          '            "i_status": "2024-10-31T08:27:32.297Z",'
+          '            "t_status": "02:31:16",'
+          '            "t_direcao": "00:00:00",'
+          '            "t_refeicao": "00:00:00",'
+          '            "t_descanso": "00:00:00",'
+          '            "t_desc_ref": "00:00:00",'
+          '            "t_parado": "02:31:16",'
+          '            "m_parada": "Aguardando In'#65533'cio de Dire'#65533#65533'o",'
+          '            "t_espera": "00:00:00",'
+          '            "t_trabalhado": "02:31:16",'
+          '            "t_rest_trab": "10:31:16",'
+          '            "t_he": "00:00:00",'
+          
+            '            "ult_macro": "INICIO DE JORNADA C DESENGATE\n SENHA:' +
+            '723320",'
+          '            "placa": "JAY9D39",'
+          '            "d_posicao": "2024-10-31T10:58:49.000Z",'
+          '            "ult_posicao": "0.02 Km - 1515151",'
+          '            "ignicao": 2,'
+          '            "obs": "",'
+          '            "obs2": "",'
+          '            "obs3": "",'
+          '            "d_envio": "2024-10-31T11:01:31.490Z"'
+          '        }'
+          '    }')
+      end
+      object mmoJsonToArray: TMemo
+        Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+        Align = Top
+        Margins.Left = 10.000000000000000000
+        Margins.Top = 10.000000000000000000
+        Margins.Right = 10.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 316.000000000000000000
+        Size.Width = 581.000000000000000000
+        Size.Height = 333.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 3
+        Lines.Strings = (
+          '[    {'
+          '        "motorista": {'
+          '            "codigo": 6941,'
+          '            "transportador": 3260134,'
+          '            "sindicato": 649,'
+          '            "grupos": ['
+          '                {'
+          '                    "codigo": 375264,'
+          '                    "pessoa": 3260134,'
+          '                    "nome": "MOTORISTAS LETSARA"'
+          '                },'
+          '                {'
+          '                    "codigo": 34486,'
+          '                    "pessoa": 3260134,'
+          '                    "nome": "GM2"'
+          '                },'
+          '                {'
+          '                    "codigo": 175863,'
+          '                    "pessoa": 3260134,'
+          '                    "nome": "GM4"'
+          '                }'
+          '            ]'
+          '        },'
+          '        "dados": {'
+          '            "nome_mot": "CLEOMAR GODOI VILHALVA",'
+          '            "escala": "Trabalho",'
+          '            "ini_jor": "2024-10-31T08:27:31.000Z",'
+          '            "status": "Parado",'
+          '            "o_status": "Parametriza'#65533#65533'o",'
+          '            "i_status": "2024-10-31T08:27:32.297Z",'
+          '            "t_status": "02:31:16",'
+          '            "t_direcao": "00:00:00",'
+          '            "t_refeicao": "00:00:00",'
+          '            "t_descanso": "00:00:00",'
+          '            "t_desc_ref": "00:00:00",'
+          '            "t_parado": "02:31:16",'
+          '            "m_parada": "Aguardando In'#65533'cio de Dire'#65533#65533'o",'
+          '            "t_espera": "00:00:00",'
+          '            "t_trabalhado": "02:31:16",'
+          '            "t_rest_trab": "10:31:16",'
+          '            "t_he": "00:00:00",'
+          
+            '            "ult_macro": "INICIO DE JORNADA C DESENGATE\n SENHA:' +
+            '723320",'
+          '            "placa": "JAY9D39",'
+          '            "d_posicao": "2024-10-31T10:58:49.000Z",'
+          '            "ult_posicao": "0.02 Km - 1515151",'
+          '            "ignicao": 2,'
+          '            "obs": "",'
+          '            "obs2": "",'
+          '            "obs3": "",'
+          '            "d_envio": "2024-10-31T11:01:31.490Z"'
+          '        }'
+          '    },'
+          '    {'
+          '        "motorista": {'
+          '            "codigo": 6941,'
+          '            "transportador": 3260134,'
+          '            "sindicato": 649,'
+          '            "grupos": ['
+          '                {'
+          '                    "codigo": 375264,'
+          '                    "pessoa": 3260134,'
+          '                    "nome": "MOTORISTAS LETSARA"'
+          '                },'
+          '                {'
+          '                    "codigo": 34486,'
+          '                    "pessoa": 3260134,'
+          '                    "nome": "GM2"'
+          '                },'
+          '                {'
+          '                    "codigo": 175863,'
+          '                    "pessoa": 3260134,'
+          '                    "nome": "GM4"'
+          '                }'
+          '            ]'
+          '        },'
+          '        "dados": {'
+          '            "nome_mot": "CLEOMAR GODOI VILHALVA",'
+          '            "escala": "Trabalho",'
+          '            "ini_jor": "2024-10-31T08:27:31.000Z",'
+          '            "status": "Parado",'
+          '            "o_status": "Parametriza'#65533#65533'o",'
+          '            "i_status": "2024-10-31T08:27:32.297Z",'
+          '            "t_status": "02:31:16",'
+          '            "t_direcao": "00:00:00",'
+          '            "t_refeicao": "00:00:00",'
+          '            "t_descanso": "00:00:00",'
+          '            "t_desc_ref": "00:00:00",'
+          '            "t_parado": "02:31:16",'
+          '            "m_parada": "Aguardando In'#65533'cio de Dire'#65533#65533'o",'
+          '            "t_espera": "00:00:00",'
+          '            "t_trabalhado": "02:31:16",'
+          '            "t_rest_trab": "10:31:16",'
+          '            "t_he": "00:00:00",'
+          
+            '            "ult_macro": "INICIO DE JORNADA C DESENGATE\n SENHA:' +
+            '723320",'
+          '            "placa": "JAY9D39",'
+          '            "d_posicao": "2024-10-31T10:58:49.000Z",'
+          '            "ult_posicao": "0.02 Km - 1515151",'
+          '            "ignicao": 2,'
+          '            "obs": "",'
+          '            "obs2": "",'
+          '            "obs3": "",'
+          '            "d_envio": "2024-10-31T11:01:31.490Z"'
+          '        }'
+          '    }'
+          ']')
+      end
+    end
+    object tbtm2: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = False
+      Size.Width = 67.000000000000000000
+      Size.Height = 24.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'ObjectTo'
+      object mmoObjectToJson: TMemo
+        Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+        Align = Top
+        Margins.Left = 10.000000000000000000
+        Margins.Top = 10.000000000000000000
+        Margins.Right = 10.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 10.000000000000000000
+        Size.Width = 581.000000000000000000
+        Size.Height = 271.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 2
+      end
+      object btnObjectToJson: TButton
+        Align = Top
+        Margins.Left = 10.000000000000000000
+        Margins.Right = 10.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 281.000000000000000000
+        Size.Width = 581.000000000000000000
+        Size.Height = 25.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Text = 'ObjectToJson'
+        OnClick = btnObjectToJsonClick
+      end
+      object btnObjectToArray: TButton
+        Align = Top
+        Enabled = False
+        Margins.Left = 10.000000000000000000
+        Margins.Right = 10.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 649.000000000000000000
+        Size.Width = 581.000000000000000000
+        Size.Height = 25.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 3
+        Text = 'ObjectToArray'
+      end
+      object mmoObjectToArray: TMemo
+        Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+        Align = Top
+        Margins.Left = 10.000000000000000000
+        Margins.Top = 10.000000000000000000
+        Margins.Right = 10.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 316.000000000000000000
+        Size.Width = 581.000000000000000000
+        Size.Height = 333.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 4
+      end
+    end
+  end
+end

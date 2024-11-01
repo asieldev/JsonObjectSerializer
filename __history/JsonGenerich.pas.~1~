@@ -1,0 +1,20 @@
+unit JsonUtilsView;
+
+interface
+
+uses
+  Rtti, TypInfo, uJsonDataObjects, SysUtils;
+
+type
+  TJsonSerializer<T: class, constructor> = class
+  public
+    class function ObjectToJson(Obj: T): string;
+    class function JsonToObject(const Json: string): T;
+    class function ArrayToJson(const ObjArray: TArray<T>): string;
+    class function JsonToArray(const Json: string): TArray<T>;
+  end;
+
+
+implementation
+
+end.
