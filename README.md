@@ -7,7 +7,7 @@
 ## Características
 
 - **Deserialización de JSON a objetos**: Convierte cadenas JSON en instancias de objetos de tipo `T`.
-- **Serialización de objetos a JSON**: Genera una cadena JSON a partir de un objeto de tipo `T`.
+- **Serialización de objetos a JSON**: Genera una cadena JSON a partir de un objeto de tipo `T`(Fase de implementación).
 - **Soporte para tipos complejos**: Deserializa y serializa propiedades de tipo clase y arrays de objetos.
 - **Manejo de tipos básicos**: Admite enteros, cadenas, booleanos, y enumeraciones.
 
