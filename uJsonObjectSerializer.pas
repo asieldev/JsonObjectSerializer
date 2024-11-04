@@ -28,7 +28,7 @@ type
     class function DeserializeValue(const Ctx: TRttiContext;
       RttiProp: TRttiProperty; JsonValue: TJSONValue): TValue;
   public
-    class function JsonToObject(const Json: string): T;overload;
+    class function JsonObjectToObject(const Json: string): T;overload;
     class function JsonObjectToObject(JsonObj: TJSONObject): T;overload;
     class function JsonArrayToObjectArray(JsonArray: TJSONArray): TArray<T>;overload;
     class function JsonStringToObjectArray(const JsonArrayString: string): TArray<T>;overload;
@@ -163,7 +163,7 @@ begin
     for i := 0 to JsonArray.Count - 1 do
     begin
       JsonObj := JsonArray.Items[i] as TJSONObject;
-      ObjValue := JsonToObject(JsonObj.ToString);  // Convierte cada elemento JSON en un objeto T
+      ObjValue := JsonObjectToObject(JsonObj.ToString);  // Convierte cada elemento JSON en un objeto T
       Result[i] := ObjValue;
     end;
 
@@ -226,7 +226,7 @@ begin
   end;
 end;
 
-class function TJsonObjectSerializer<T>.JsonToObject(const Json: string): T;
+class function TJsonObjectSerializer<T>.JsonObjectToObject(const Json: string): T;
 var
   Ctx: TRttiContext;
   RttiType: TRttiType;

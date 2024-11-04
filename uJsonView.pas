@@ -83,7 +83,7 @@ begin
 
   if mmoJsonToObject.Text <> EmptyStr then
   begin
-    Jornada:= TJsonObjectSerializer<TJornada>.JsonToObject(mmoJsonToObject.Text);
+    Jornada:= TJsonObjectSerializer<TJornada>.JsonObjectToObject(mmoJsonToObject.Text);
 
     if Assigned(Jornada) then
       ShowMessage(Format('Jornadas: %d, %d, %d', [Jornada.motorista.codigo, Jornada.motorista.sindicato, Jornada.motorista.transportador]))
