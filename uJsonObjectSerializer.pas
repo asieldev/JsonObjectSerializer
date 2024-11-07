@@ -32,8 +32,6 @@ type
     class function JsonObjectToObject(JsonObj: TJSONObject): T;overload;
     class function JsonArrayToObjectArray(JsonArray: TJSONArray): TArray<T>;overload;
     class function JsonStringToObjectArray(const JsonArrayString: string): TArray<T>;overload;
-
-    class function ObjectToJsonString(Obj: T): string;
   end;
 
 implementation
@@ -263,109 +261,5 @@ begin
   end;
 end;
 
-// Incompleta... vamos a colaborar!!!
-class function TJsonObjectSerializer<T>.ObjectToJsonString(Obj: T): string;
-var
-  Ctx: TRttiContext;
-  RttiType: TRttiType;
-  RttiProp: TRttiProperty;
-  JsonObj: TJSONObject;
-  PropValue: TValue;
-  i, ArrayLength: Integer;
-  ChildObj: TObject;
-  JsonArray: TJSONArray;
-  ElementValue: TValue;
-  ChildJsonStr: string;
-  ChildJsonObj: TJSONObject;
-begin
-  if not Assigned(Obj) then
-    raise Exception.Create('El objeto no puede ser nulo');
-
-  Ctx := TRttiContext.Create;
-  JsonObj := TJSONObject.Create;
-
-  try
-    RttiType := Ctx.GetType(T);
-    for RttiProp in RttiType.GetProperties do
-    begin
-      if RttiProp.IsReadable and Assigned(RttiProp.PropertyType) then
-      begin
-        PropValue := RttiProp.GetValue(TObject(Obj));
-        case RttiProp.PropertyType.TypeKind of
-          tkInteger:
-            JsonObj.AddPair(RttiProp.Name, TJSONNumber.Create(PropValue.AsInteger));
-          tkFloat:
-            if RttiProp.PropertyType.Handle = TypeInfo(TDateTime) then
-              JsonObj.AddPair(RttiProp.Name, TJSONString.Create(DateTimeToStr(PropValue.AsExtended)))
-            else
-              JsonObj.AddPair(RttiProp.Name, TJSONNumber.Create(PropValue.AsExtended));
-          tkString, tkUString, tkWString:
-            JsonObj.AddPair(RttiProp.Name, TJSONString.Create(PropValue.AsString));
-          tkEnumeration:
-            if RttiProp.PropertyType.Handle = TypeInfo(Boolean) then
-            begin
-              if PropValue.AsBoolean then
-                JsonObj.AddPair(RttiProp.Name, TJSONTrue.Create)
-              else
-                JsonObj.AddPair(RttiProp.Name, TJSONFalse.Create);
-            end
-            else
-              JsonObj.AddPair(RttiProp.Name, TJSONString.Create(PropValue.ToString));
-          tkClass:
-            begin
-              ChildObj := PropValue.AsObject;
-              if Assigned(ChildObj) then
-              begin
-                ChildJsonStr := TJsonObjectSerializer<TObject>.ObjectToJsonString(ChildObj);
-                ChildJsonObj := TJSONObject.ParseJSONValue(ChildJsonStr) as TJSONObject;
-                try
-                  if Assigned(ChildJsonObj) then
-                    JsonObj.AddPair(RttiProp.Name, ChildJsonObj.Clone as TJSONObject);
-                finally
-                  ChildJsonObj.Free;
-                end;
-              end
-              else
-                JsonObj.AddPair(RttiProp.Name, TJSONObject.Create); // JSON vacío si es nil
-            end;
-          tkDynArray:
-            begin
-              JsonArray := TJSONArray.Create;
-              ArrayLength := PropValue.GetArrayLength;
-
-              for i := 0 to ArrayLength - 1 do
-              begin
-                ElementValue := PropValue.GetArrayElement(i);
-
-                if ElementValue.IsObject then
-                begin
-                  ChildObj := ElementValue.AsObject;
-                  if Assigned(ChildObj) then
-                  begin
-                    ChildJsonStr := TJsonObjectSerializer<TObject>.ObjectToJsonString(ChildObj);
-                    ChildJsonObj := TJSONObject.ParseJSONValue(ChildJsonStr) as TJSONObject;
-                    try
-                      if Assigned(ChildJsonObj) then
-                        JsonArray.AddElement(ChildJsonObj.Clone as TJSONObject);
-                    finally
-                      ChildJsonObj.Free;
-                    end;
-                  end;
-                end;
-              end;
-
-              JsonObj.AddPair(RttiProp.Name, JsonArray);
-            end;
-        end;
-      end;
-    end;
-
-    Result := JsonObj.ToString;
-  finally
-    JsonObj.Free;
-    Ctx.Free;
-  end;
-end;
-
-end.
+end.
 

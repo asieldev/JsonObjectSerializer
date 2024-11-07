@@ -269,6 +269,7 @@ object Form1: TForm1
       end
       object btnObjectToJson: TButton
         Align = Top
+        Enabled = False
         Margins.Left = 10.000000000000000000
         Margins.Right = 10.000000000000000000
         Position.X = 10.000000000000000000
@@ -278,7 +279,6 @@ object Form1: TForm1
         Size.PlatformDefault = False
         TabOrder = 1
         Text = 'ObjectToJson'
-        OnClick = btnObjectToJsonClick
       end
       object btnObjectToArray: TButton
         Align = Top

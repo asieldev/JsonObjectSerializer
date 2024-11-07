@@ -65,7 +65,6 @@ type
     btnObjectToArray: TButton;
     procedure btnJsonToObjectClick(Sender: TObject);
     procedure btnJsonToArrayClick(Sender: TObject);
-    procedure btnObjectToJsonClick(Sender: TObject);
   end;
 
 var
@@ -110,16 +109,5 @@ begin
   end
   else
     ShowMessage('Json nulo');
-end;
-
-
-procedure TForm1.btnObjectToJsonClick(Sender: TObject);
-begin
-  if not Assigned(Jornada) then
-    Jornada:= TJornada.Create;
-
-  mmoObjectToJson.Text:= TJsonObjectSerializer<TJornada>.ObjectToJsonString(Jornada);
-
-  ShowMessage('Esta función puede presentar problemas al intentar manipular TClass');
 end;
 end.
